@@ -1,0 +1,89 @@
+1st fitbit page: auth.py
+. currently: instantiate FitbitOauthClient, get request token, save it via cookies, redirect
+. instead: 
+ ### Also consider whether app tokens exist in DB / config file ###
+	load consumer key/secret
+	if access_token vars available in cookies:
+		redirect to input page	
+	# may be easier to get straight to else:
+	elif request_token vars exist in DB:
+		instantiate fitbit.FitbitOauthClient
+		redirect user to fitbit auth page -> redirects to input page
+	else:
+		instantiate fitbit.FitbitOauthClient 
+		save credentials to Request_Token table
+		redirect user to fitbit auth page -> redirects to input page 
+
+2nd page: input.py
+. currently: retrieve cookie data, get verifier, save it to cookie, pass data in form
+. instead:
+	if access_token vars available in cookies:
+		go on to getting input
+		pass data in form
+	else:
+		save verifier -- save it to DB?
+		instantiate fitbit.FitbitOauthClient
+		get access_token -- save them in COOKIES
+		go on to getting input
+		pass data in form
+
+3rd page: results.py
+. currently: pull stuff from cookies, reinstantiate FitbitOauthClient, get access token, instantiate Jfitbit
+. instead:
+	load consumer_key/secret
+	pull access_token stuff from cookies
+		if not: error out
+	instantiate Jfitbit  
+		if not: error out
+	pull as much as possible into database
+
+
+######### OLD #################
+. log in to local website ((hopefully authenticated) hopefully via ssl)
+. tell website i want to do something with fitbit
+.. by doing so, instantiate instance of Jfitbit
+.. present options for methods and output results
+.. meanwhile, pull down all relevant data from account (preferably store to database) and $ELL IT
+... need to be able to re-populate every time, but not overwrite old data
+... start out with only things i'm intereste in at first? or find way to crawl whole API?
+
+1st page -- /var/www/html/fitbit/index.html
+. pull down data for activities listed
+. link to fitbit with text 'fitbit'
+2nd page -- /var/www/html/fitbit/cgi-bin/input.py:
+. instantiate class
+. pull down following, save it into database:
+.. data for activities listed
+.. username, display, ID
+. give options for 'log weight' and 'ride bike', whatever the hell else
+3rd page: take input from page 2, print it out along with 10 most recent records for said activity
+
+to do:
+1) fix jfitbit module so that it doesn't depend on config.ini (ie, pass those variables)
+	and it doesn't have to worry about path to api
+2) make sure script can instantiate class
+3) make sure input vars can be parsed
+4) DB STUFF
+
+# revised plan:
+) redo fitbit link on intro page:
+. have it point to script that gets application's auth token and
+.. must send CALLBACK URL
+	-- if that's successful, FIND WAY TO redirect, or maybe just create a link for now,
+		 that opens in new window, that points to the customer authorization URL; 
+		this should automatically redirect (preferably in original window) customer
+		to page where they can log stuff
+
+
+
+
+systems-specific stuff that must be in place for site to work:
+. jfitbit in modules dir
+. python-fitbit in modules dir
+. selinux stuff enabled: setsebool -P httpd_can_network_connect 1
+
+start oauth session
+get authorization token
+get user auth / verification
+use verification to get access token
+use access token to initialize authenticated session
